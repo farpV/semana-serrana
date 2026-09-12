@@ -22,8 +22,9 @@
   --c-trabajo:#3C6491; --c-trayecto:#A9762C; --c-ensayo:#7E5490;
   --c-entreno:#B3453C; --c-estudio:#1F6B5E; --c-comida:#6E8C2E; --c-casa:#6B7370;
   --ok:#2E7D5B; --warn:#A9762C; --crit:#B3453C;
-  --shadow:0 1px 2px rgba(20,26,24,.06), 0 6px 18px rgba(20,26,24,.05);
-  --r:14px;
+  --shadow:0 1px 2px rgba(20,26,24,.05), 0 10px 30px -12px rgba(20,40,34,.28);
+  --r:18px;
+  --sec:#1F6B5E; --on-sec:#FFFFFF;
   --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
   --body:"Instrument Sans","Helvetica Neue",Arial,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
@@ -36,7 +37,7 @@
     --accent:#4FB09C; --accent-ink:#08211C; --accent-soft:#17322C;
     --c-trabajo:#7FA6D4; --c-trayecto:#D7A55C; --c-ensayo:#B58CC6;
     --c-entreno:#E0786D; --c-estudio:#4FB09C; --c-comida:#A3C25E; --c-casa:#97A29E;
-    --ok:#5BBF93; --warn:#D7A55C; --crit:#E0786D;
+    --ok:#5BBF93; --warn:#D7A55C; --crit:#E0786D; --on-sec:#0E1412;
     --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 22px rgba(0,0,0,.28);
     color-scheme:dark;
   }
@@ -47,7 +48,7 @@
   --accent:#4FB09C; --accent-ink:#08211C; --accent-soft:#17322C;
   --c-trabajo:#7FA6D4; --c-trayecto:#D7A55C; --c-ensayo:#B58CC6;
   --c-entreno:#E0786D; --c-estudio:#4FB09C; --c-comida:#A3C25E; --c-casa:#97A29E;
-  --ok:#5BBF93; --warn:#D7A55C; --crit:#E0786D;
+  --ok:#5BBF93; --warn:#D7A55C; --crit:#E0786D; --on-sec:#0E1412;
   --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 22px rgba(0,0,0,.28);
   color-scheme:dark;
 }
@@ -65,6 +66,15 @@ input,textarea,select{font:inherit; color:inherit}
 :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:6px}
 .mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
 [hidden]{display:none !important}
+
+/* ---------- color por sección ---------- */
+.shell[data-sec="hoy"]{--sec:#BE853B}
+.shell[data-sec="agenda"]{--sec:var(--c-trabajo)}
+.shell[data-sec="entreno"]{--sec:var(--c-entreno)}
+.shell[data-sec="comida"]{--sec:var(--c-comida)}
+.shell[data-sec="banda"]{--sec:var(--c-ensayo)}
+.shell[data-sec="estudio"]{--sec:#6E5B9E}
+.shell[data-sec="datos"]{--sec:var(--accent)}
 
 .shell{max-width:1040px; margin:0 auto; padding-inline:16px; padding-block:0 96px}
 header.top{
@@ -102,7 +112,10 @@ nav.tabs button{
   border-radius:10px; font-size:10.5px;
 }
 nav.tabs button svg{width:21px; height:21px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
-nav.tabs button[aria-current="true"]{color:var(--accent); background:var(--accent-soft)}
+nav.tabs button[aria-current="true"]{color:var(--sec); background:var(--surface2)}
+@supports (color: color-mix(in srgb, red, blue)){
+  nav.tabs button[aria-current="true"]{background:color-mix(in srgb, var(--sec) 15%, transparent)}
+}
 
 .stack{display:flex; flex-direction:column; gap:14px; margin-top:16px}
 .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); box-shadow:var(--shadow)}
@@ -110,6 +123,7 @@ nav.tabs button[aria-current="true"]{color:var(--accent); background:var(--accen
 .card>.head h2{font-size:15.5px; flex:1; min-width:0}
 .card>.body{padding:12px 15px 15px}
 .eyebrow{font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink3)}
+.card>.head .eyebrow{color:var(--sec); font-weight:500}
 .muted{color:var(--ink2)}
 .small{font-size:13.5px}
 .empty{padding:18px 15px; color:var(--ink2); font-size:14px}
@@ -117,22 +131,45 @@ nav.tabs button[aria-current="true"]{color:var(--accent); background:var(--accen
   border-left:3px solid var(--warn); background:var(--surface2);
   padding:10px 12px; border-radius:0 10px 10px 0; font-size:13.5px; color:var(--ink2);
 }
-.hero{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); padding:16px 15px; box-shadow:var(--shadow)}
-.hero .day{font-family:var(--display); font-weight:700; font-size:26px; line-height:1.1; text-transform:capitalize}
-.hero .date{color:var(--ink3); font-size:13px; margin-top:2px}
+/* ---------- banners con paisaje ---------- */
+.banner{
+  position:relative; border-radius:var(--r); overflow:hidden; box-shadow:var(--shadow);
+  min-height:132px; display:flex; align-items:flex-end;
+  background:var(--surface2) center 62% / cover no-repeat;
+}
+.banner.tall{min-height:214px}
+.banner::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(180deg, rgba(10,16,14,0) 26%, rgba(10,16,14,.34) 58%, rgba(10,16,14,.82) 100%);
+}
+.banner .inner{position:relative; z-index:1; padding:16px 16px 15px; width:100%; color:#F4F6F3}
+.banner .eyebrow{color:rgba(244,246,243,.8)}
+.banner h2{font-size:20px; color:#fff; text-shadow:0 2px 14px rgba(0,0,0,.4)}
+.banner .day{
+  font-family:var(--display); font-weight:700; font-size:31px; line-height:1.05;
+  text-transform:capitalize; color:#fff; text-shadow:0 2px 16px rgba(0,0,0,.45);
+}
+.banner .date{color:rgba(244,246,243,.85); font-size:13px; margin-top:2px}
+.banner .sub{font-size:13px; color:rgba(244,246,243,.85); margin-top:3px}
+.banner .chip{border-color:rgba(255,255,255,.34); background:rgba(10,18,15,.34); color:rgba(255,255,255,.94)}
+.banner .chip b{color:#fff}
 .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:12px}
 .chip{display:inline-flex; align-items:center; gap:6px; font-size:12px; border:1px solid var(--line); border-radius:999px; padding:4px 10px; color:var(--ink2)}
 .chip b{font-family:var(--mono); font-weight:500; color:var(--ink)}
-.dot{width:8px; height:8px; border-radius:50%; flex:0 0 auto}
+.dot{width:8px; height:8px; border-radius:50%; flex:0 0 auto; box-shadow:0 0 0 2px rgba(255,255,255,.22)}
 
 ul.blocks{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
 ul.blocks li{display:flex; gap:11px; padding:9px 0; border-top:1px solid var(--line)}
 ul.blocks li:first-child{border-top:0}
-ul.blocks li.now{background:var(--accent-soft); margin-inline:-15px; padding-inline:15px; border-radius:8px; border-top-color:transparent}
+ul.blocks li.now{background:var(--surface2); margin-inline:-15px; padding-inline:15px; border-radius:10px; border-top-color:transparent}
 ul.blocks li.done .title{text-decoration:line-through; color:var(--ink3)}
+ul.blocks li.done .stripe{opacity:.35}
+@supports (color: color-mix(in srgb, red, blue)){
+  ul.blocks li.now{background:color-mix(in srgb, var(--sec) 13%, transparent)}
+}
 .time{font-family:var(--mono); font-size:12.5px; color:var(--ink2); width:44px; flex:0 0 auto; padding-top:1px}
 .time span{display:block; color:var(--ink3)}
-.stripe{width:3px; border-radius:2px; flex:0 0 auto; align-self:stretch}
+.stripe{width:4px; border-radius:3px; flex:0 0 auto; align-self:stretch}
 .bmain{flex:1; min-width:0}
 .bmain .title{font-weight:500; font-size:14.5px; overflow-wrap:anywhere}
 .bmain .meta{font-size:12px; color:var(--ink3); margin-top:1px}
@@ -141,8 +178,11 @@ ul.blocks li.done .title{text-decoration:line-through; color:var(--ink3)}
   border:1px solid var(--line); border-radius:7px; background:var(--surface2);
   display:grid; place-items:center; padding:0;
 }
-.tick svg{width:14px; height:14px; stroke:var(--accent); fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; opacity:0}
-.tick[aria-pressed="true"]{background:var(--accent-soft); border-color:var(--accent)}
+.tick svg{width:14px; height:14px; stroke:var(--sec); fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; opacity:0}
+.tick[aria-pressed="true"]{background:var(--surface2); border-color:var(--sec)}
+@supports (color: color-mix(in srgb, red, blue)){
+  .tick[aria-pressed="true"]{background:color-mix(in srgb, var(--sec) 18%, transparent)}
+}
 .tick[aria-pressed="true"] svg{opacity:1}
 .del{
   width:24px; height:24px; flex:0 0 auto; align-self:center; cursor:pointer; padding:0;
@@ -172,10 +212,11 @@ textarea.feel{
   width:100%; margin-top:10px; min-height:62px; resize:vertical;
   background:var(--surface2); border:1px solid var(--line); border-radius:10px; padding:9px 10px; font-size:13.5px;
 }
-.btn{border:1px solid var(--line); background:var(--surface2); border-radius:10px; padding:8px 12px; font-size:13.5px; cursor:pointer}
-.btn:hover{border-color:var(--accent)}
-.btn.primary{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
-.btn.primary[aria-pressed="true"]{background:var(--accent-soft); color:var(--ink); border-color:var(--accent)}
+.btn{border:1px solid var(--line); background:var(--surface2); border-radius:11px; padding:9px 13px; font-size:13.5px; cursor:pointer}
+.btn:hover{border-color:var(--sec)}
+.btn.primary{background:var(--sec); border-color:var(--sec); color:var(--on-sec); font-weight:500}
+.btn.primary[aria-pressed="true"]{background:var(--surface2); color:var(--ink); border-color:var(--sec)}
+.pill[aria-pressed="true"]{background:var(--sec); border-color:var(--sec); color:var(--on-sec)}
 .btn.danger{color:var(--crit)}
 .btn.danger:hover{border-color:var(--crit)}
 .btnrow{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
@@ -191,7 +232,7 @@ textarea.feel{
 .shop .n{flex:1; min-width:0}
 .shop .q{font-family:var(--mono); font-size:12px; color:var(--ink3)}
 .meter{height:7px; border-radius:99px; background:var(--surface2); overflow:hidden; margin-top:8px}
-.meter i{display:block; height:100%; background:var(--accent)}
+.meter i{display:block; height:100%; background:var(--sec)}
 .meter.over i{background:var(--crit)}
 
 .items{list-style:none; margin:0; padding:0}
@@ -381,6 +422,34 @@ form.newblock .wide{grid-column:1/-1}
     return c;
   }
   function stack(){ var s=document.createElement('div'); s.className='stack'; return s }
+  function banner(o){
+    var el = document.createElement('div');
+    el.className = 'banner' + (o.tall ? ' tall' : '');
+    el.style.backgroundImage = 'url("img/' + o.img + '.webp")';
+    el.setAttribute('role','img');
+    el.setAttribute('aria-label', o.alt || 'Paisaje de la serranía de Ronda');
+    el.innerHTML = '<div class="inner">' +
+      (o.eyebrow ? '<div class="eyebrow">'+esc(o.eyebrow)+'</div>' : '') +
+      (o.day ? '<div class="day">'+esc(o.day)+'</div>' : '') +
+      (o.title ? '<h2>'+esc(o.title)+'</h2>' : '') +
+      (o.date ? '<div class="date">'+esc(o.date)+'</div>' : '') +
+      (o.sub ? '<div class="sub">'+esc(o.sub)+'</div>' : '') +
+      (o.chips ? '<div class="chips">'+o.chips+'</div>' : '') +
+      '</div>';
+    return el;
+  }
+  function imagenDelDia(){
+    if(!isCurrentWeek()) return 'hoy';
+    var hh = new Date().getHours();
+    if(hh < 11) return 'hoy';
+    if(hh < 18) return 'agenda';
+    if(hh < 21) return 'entreno';
+    return 'banda';
+  }
+  function altDelDia(){
+    return ({hoy:'Amanecer sobre la serranía', agenda:'La serranía a mediodía',
+             entreno:'Atardecer sobre la serranía', banda:'La serranía de noche'})[imagenDelDia()];
+  }
   function emptyCard(msg){
     var c = document.createElement('div'); c.className='card';
     c.innerHTML = '<div class="empty">'+msg+'</div>'; return c;
@@ -402,6 +471,7 @@ form.newblock .wide{grid-column:1/-1}
       ' al ' + last.getDate() + ' de ' + MONTHS[last.getMonth()] +
       '<small>' + (isCurrentWeek() ? 'semana en curso' : (state.monday > new Date() ? 'próxima' : 'pasada')) + '</small>';
     document.getElementById('datosbtn').setAttribute('aria-pressed', state.tab === 'datos' ? 'true':'false');
+    document.querySelector('.shell').dataset.sec = state.tab;
     var views = {hoy:viewHoy, agenda:viewAgenda, entreno:viewEntreno, comida:viewComida, banda:viewBanda, estudio:viewEstudio, datos:viewDatos};
     var v = document.getElementById('view');
     v.innerHTML = '';
@@ -524,19 +594,19 @@ form.newblock .wide{grid-column:1/-1}
     var dayIso = iso(target);
     var bs = blocksOf(dayIso);
 
-    var hero = document.createElement('div');
-    hero.className = 'hero';
     var totals = {};
     bs.forEach(function(b){ totals[b.cat] = (totals[b.cat]||0) + dur(b.ini,b.fin) });
     var chips = Object.keys(totals).map(function(k){
       var cat = CATS[k] || CATS.casa;
       return '<span class="chip"><i class="dot" style="background:'+cat.c+'"></i>'+esc(cat.n)+' <b>'+hrs(totals[k])+'</b></span>';
     }).join('');
-    hero.innerHTML = '<div class="eyebrow">'+(isCurrentWeek()?'Hoy':'Primer día de la semana')+'</div>'+
-      '<div class="day">'+DAYNAMES[(target.getDay()+6)%7]+'</div>'+
-      '<div class="date">'+longDate(target)+' de '+target.getFullYear()+'</div>'+
-      '<div class="chips">'+(chips || '<span class="chip">Día sin bloques</span>')+'</div>';
-    s.appendChild(hero);
+    s.appendChild(banner({
+      img: imagenDelDia(), alt: altDelDia(), tall: true,
+      eyebrow: isCurrentWeek() ? 'Hoy' : 'Primer día de la semana',
+      day: DAYNAMES[(target.getDay()+6)%7],
+      date: longDate(target) + ' de ' + target.getFullYear(),
+      chips: chips || '<span class="chip">Día sin bloques</span>'
+    }));
 
     var c1 = card('El día, por bloques');
     c1.body.appendChild(blockList(dayIso, {markNow:true}));
@@ -589,6 +659,12 @@ form.newblock .wide{grid-column:1/-1}
         var m = dur(b.ini,b.fin); totals[b.cat] = (totals[b.cat]||0)+m; grand += m;
       });
     });
+    var libres = Math.max(0, 7*16*60 - grand);
+    s.appendChild(banner({
+      img:'agenda', alt:'La serranía a mediodía', title:'La semana entera',
+      eyebrow:'Agenda',
+      sub: grand ? hrs(grand)+' comprometidas · unas '+hrs(libres)+' de margen despierto' : 'Todavía sin bloques'
+    }));
 
     var c0 = card('Reparto de la semana', grand ? hrs(grand)+' ocupadas' : 'vacía');
     var ed = document.createElement('button');
@@ -632,7 +708,14 @@ form.newblock .wide{grid-column:1/-1}
   function viewEntreno(){
     var s = stack();
     var en = d('entreno');
-    if(!en || !(en.sesiones||[]).length){
+    var ses = (en && en.sesiones) || [];
+    s.appendChild(banner({
+      img:'entreno', alt:'Atardecer sobre la serranía', title:'Entreno de la semana', eyebrow:'Fuerza y movilidad',
+      sub: ses.length
+        ? ses.length+' sesiones · '+ses.filter(function(x){return x.hecho}).length+' hechas'
+        : 'Sin plan para esta semana'
+    }));
+    if(!en || !ses.length){
       s.appendChild(emptyCard('Sin plan de entreno para esta semana. El plan se propone cada semana según el tiempo que dejan el trabajo y los trayectos, y se importa desde el botón de datos.'));
       return s;
     }
@@ -698,6 +781,12 @@ form.newblock .wide{grid-column:1/-1}
   function viewComida(){
     var s = stack();
     var mn = d('menu');
+    var coste = (mn && mn.compra && mn.compra.coste) || 0;
+    s.appendChild(banner({
+      img:'comida', alt:'Olivar en bancales', title:'Menú y compra', eyebrow:'Cinco comidas al día',
+      sub: mn ? (coste ? 'Cesta estimada en '+Number(coste).toFixed(0)+' €' : 'Menú listo, compra pendiente')
+              : 'El menú se prepara el lunes'
+    }));
     if(!mn){
       s.appendChild(emptyCard('Todavía no hay menú de esta semana. Se elabora el lunes, con cinco comidas al día y almuerzo ligero los días de táper en el trabajo.'));
       return s;
@@ -777,6 +866,11 @@ form.newblock .wide{grid-column:1/-1}
     var s = stack();
     var bd = d('banda');
     var ens = (bd && bd.ensayos) || [];
+    var minEns = ens.reduce(function(a,e){ return a + dur(e.ini,e.fin) }, 0);
+    s.appendChild(banner({
+      img:'banda', alt:'La serranía de noche', title:'Banda', eyebrow:'Arriate',
+      sub: ens.length ? ens.length+' ensayos · '+hrs(minEns)+' de atril' : 'Ensayos por confirmar'
+    }));
     var c = card('Ensayos de la semana', ens.length ? String(ens.length) : 'por confirmar');
     if(ens.length){
       var ul = document.createElement('ul'); ul.className='blocks';
@@ -830,10 +924,11 @@ form.newblock .wide{grid-column:1/-1}
     weekDates().forEach(function(dt){
       blocksOf(iso(dt)).forEach(function(b){ if(b.cat==='trayecto') carMin += dur(b.ini,b.fin) });
     });
-    var top = card('Tiempo de coche esta semana', 'audio-estudio');
-    top.body.innerHTML = '<div class="mono" style="font-size:24px; font-weight:500">'+hrs(carMin)+'</div>'+
-      '<div class="hint">Ronda–Antequera son unos 70 minutos por sentido: esas son las horas de clases y podcasts sin quitarle tiempo a nada.</div>';
-    s.appendChild(top);
+    s.appendChild(banner({
+      img:'estudio', alt:'Carretera de la serranía al atardecer', title:'Estudio en el coche', eyebrow:'Audio-estudio',
+      sub:'Ronda–Antequera son unos 70 minutos por sentido',
+      chips:'<span class="chip">Volante esta semana <b>'+hrs(carMin)+'</b></span>'
+    }));
 
     var lib = store.estudio || {items:[]};
     var pend = (lib.items||[]).filter(function(i){ return i.estado !== 'hecho' }).length;

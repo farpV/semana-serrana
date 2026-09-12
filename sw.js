@@ -1,12 +1,18 @@
 /* Semana Serrana — service worker: la app abre sin conexión. */
-var CACHE = 'semana-serrana-v1';
+var CACHE = 'semana-serrana-v2';
 var ASSETS = [
   './',
   'index.html',
   'manifest.webmanifest',
   'icon-192.png',
   'icon-512.png',
-  'icon-maskable-512.png'
+  'icon-maskable-512.png',
+  'img/hoy.webp',
+  'img/agenda.webp',
+  'img/entreno.webp',
+  'img/comida.webp',
+  'img/banda.webp',
+  'img/estudio.webp'
 ];
 
 self.addEventListener('install', function(e){
