@@ -1,5 +1,5 @@
 /* Semana Serrana — service worker: la app abre sin conexión. */
-var CACHE = 'semana-serrana-v2';
+var CACHE = "semana-serrana-v3";
 var ASSETS = [
   './',
   'index.html',
