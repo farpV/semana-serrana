@@ -1,0 +1,9 @@
+# Datos personales: nunca al repositorio
+*.json
+!manifest.webmanifest
+!package.json
+
+# Sistema
+Thumbs.db
+desktop.ini
+.DS_Store
