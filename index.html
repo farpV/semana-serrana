@@ -1607,7 +1607,16 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
 
   if('serviceWorker' in navigator){
     window.addEventListener('load', function(){
-      navigator.serviceWorker.register('sw.js').catch(function(){});
+      navigator.serviceWorker.register('sw.js').then(function(reg){
+        reg.update();
+        setInterval(function(){ reg.update() }, 60 * 60 * 1000);
+      }).catch(function(){});
+      var recargando = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function(){
+        if(recargando) return;
+        recargando = true;
+        location.reload();
+      });
     });
   }
 })();
