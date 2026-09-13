@@ -1,6 +1,6 @@
-# Semana Serrana
+# Agenda personal
 
-App personal de organización semanal: agenda, entreno con registro de series, menú y lista de la compra, banda y estudio.
+App personal de organización semanal: agenda, entreno con registro de series y medidas corporales, menú y lista de la compra, repertorio de la banda y estudio para los trayectos.
 
 ## Cómo funciona
 
@@ -26,6 +26,7 @@ Abrir la web en Chrome y elegir «Añadir a pantalla de inicio». Queda como una
 | `manifest.webmanifest` | Nombre, icono y colores al instalarla |
 | `sw.js` | Service worker: funcionamiento sin conexión |
 | `icon-*.png` | Iconos de la app |
+| `img/*.webp` | Paisajes de cabecera, generados con código |
 | `datos-iniciales.json` | Carga inicial de datos (no se sube al repositorio) |
 
 ## Privacidad
@@ -35,3 +36,14 @@ Abrir la web en Chrome y elegir «Añadir a pantalla de inicio». Queda como una
 ## Publicación
 
 GitHub Pages sirve la carpeta tal cual, sin compilar nada. Rama `main`, carpeta raíz.
+
+## Secciones
+
+- **Hoy**: los bloques del día, con el que está en curso resaltado, las comidas y el entreno.
+- **Agenda**: la semana por días, reparto de horas y edición manual de bloques.
+- **Entreno**: plan de la semana con registro de series, medidas antropométricas con su evolución, y resumen mensual de entrenamientos y medidas.
+- **Comida**: menú de cinco comidas y lista de la compra, a la que se pueden añadir productos a mano.
+- **Banda**: ensayos de la semana y repertorio, con comentarios por marcha.
+- **Estudio**: podcasts recomendados de la semana y biblioteca, con comentarios en cada uno.
+
+El nombre de la carpeta y del repositorio sigue siendo `semana-serrana`, que era el nombre anterior de la app. Cambiarlo obligaría a cambiar también la dirección web.

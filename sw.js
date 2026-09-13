@@ -1,5 +1,5 @@
-/* Semana Serrana — service worker: la app abre sin conexión. */
-var CACHE = "semana-serrana-v3";
+/* Agenda personal — service worker: la app abre sin conexión. */
+var CACHE = "agenda-personal-v4";
 var ASSETS = [
   './',
   'index.html',
