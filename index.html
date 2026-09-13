@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Agenda personal</title>
 <meta name="description" content="Agenda, entreno y medidas, menú y compra, banda y estudio. Los datos se guardan solo en este dispositivo.">
 <meta name="theme-color" content="#F2F4F2" media="(prefers-color-scheme: light)">
@@ -65,8 +65,10 @@ html,body{margin:0}
 body{
   background:var(--bg); color:var(--ink);
   font-family:var(--body); font-size:15px; line-height:1.5;
-  -webkit-text-size-adjust:100%;
+  -webkit-text-size-adjust:100%; text-size-adjust:100%;
+  touch-action:manipulation;   /* nada de zoom al tocar dos veces */
 }
+input,textarea,select,button{touch-action:manipulation}
 img{max-width:100%}
 h1,h2,h3{font-family:var(--display); font-weight:700; margin:0; text-wrap:balance; letter-spacing:-.01em}
 button{font:inherit; color:inherit}
