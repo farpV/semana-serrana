@@ -268,6 +268,31 @@ form.newblock input,form.newblock select{
   background:var(--surface2); border:1px solid var(--line); border-radius:9px; padding:8px 9px; font-size:13.5px; min-width:0;
 }
 form.newblock .wide{grid-column:1/-1}
+form.newblock label{display:flex; flex-direction:column; gap:4px; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink3); min-width:0}
+form.newblock .acciones{grid-column:1/-1; display:flex; gap:8px; flex-wrap:wrap}
+li.editor{display:block !important; padding:4px 0 12px}
+
+/* ---------- vista de mes ---------- */
+.mes{display:grid; grid-template-columns:repeat(7,1fr); gap:5px}
+.mes .cab{
+  font-size:10px; text-align:center; color:var(--ink3); text-transform:uppercase;
+  letter-spacing:.06em; padding-bottom:2px;
+}
+.mes .dia{
+  aspect-ratio:1/1.1; border:1px solid var(--line); border-radius:11px; background:var(--surface2);
+  padding:5px 4px 4px; display:flex; flex-direction:column; align-items:center; gap:4px;
+  cursor:pointer; min-width:0; font:inherit; color:inherit;
+}
+.mes .dia:hover{border-color:var(--sec)}
+.mes .dia.fuera{opacity:.42}
+.mes .dia.hoy .n{background:var(--sec); color:var(--on-sec); border-radius:999px; padding:1px 6px}
+.mes .dia.sel{border-color:var(--sec); background:var(--surface); box-shadow:inset 0 0 0 1px var(--sec)}
+.mes .dia .n{font-family:var(--mono); font-size:12px; color:var(--ink2); line-height:1.3}
+.mes .dia .ps{display:flex; flex-wrap:wrap; gap:2px; justify-content:center; align-content:flex-start; min-height:12px}
+.mes .dia .ps i{width:5px; height:5px; border-radius:50%; display:block}
+.leyenda{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+.leyenda span{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; color:var(--ink2)}
+.leyenda i{width:7px; height:7px; border-radius:50%}
 .kv{list-style:none; margin:0; padding:0}
 .kv li{display:flex; justify-content:space-between; gap:12px; padding:7px 0; border-top:1px solid var(--line); font-size:13.5px}
 .kv li:first-child{border-top:0}
@@ -440,7 +465,9 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
     }
   }
 
-  var state = {tab:'hoy', sub:'menu', subEntreno:'semana', edit:false, monday:mondayOf(new Date())};
+  var state = {tab:'hoy', sub:'menu', subEntreno:'semana', subAgenda:'semana',
+               edit:false, editando:null, nuevoEn:null, mes:null, diaSel:null,
+               monday:mondayOf(new Date())};
 
   /* ============ fechas ============ */
   function pad(n){ return n<10 ? '0'+n : ''+n }
@@ -573,25 +600,100 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
     });
   }
 
+  /* Los bloques se buscan y se guardan por FECHA, no por la semana que estés viendo:
+     así se puede meter una cita de dentro de un mes sin cambiar de semana. */
+  function fechaDe(f){ return new Date(f + 'T00:00:00') }
+  function widDe(f){ return iso(mondayOf(fechaDe(f))) }
+  function agendaDe(f){ var w = store.semanas[widDe(f)]; return (w && w.agenda) || null }
+
   function blocksOf(dayIso){
-    var ag = d('agenda');
+    var ag = agendaDe(dayIso);
     if(!ag || !ag.dias) return [];
     var day = ag.dias.filter(function(x){ return x.fecha === dayIso })[0];
     var bs = (day && day.bloques) ? day.bloques.slice() : [];
     bs.sort(function(a,b){ return mins(a.ini) - mins(b.ini) });
     return bs;
   }
-  function mutateAgenda(fn){
-    var ag = clone(d('agenda') || {dias:[]});
+
+  function guardaBloques(dayIso, fn){
+    var wk = widDe(dayIso);
+    if(!store.semanas[wk]) store.semanas[wk] = {};
+    if(!store.semanas[wk].agenda) store.semanas[wk].agenda = {dias:[]};
+    var ag = store.semanas[wk].agenda;
     if(!ag.dias) ag.dias = [];
-    fn(ag);
-    save('agenda', ag);
+    var dia = ag.dias.filter(function(x){ return x.fecha === dayIso })[0];
+    if(!dia){ dia = {fecha:dayIso, bloques:[]}; ag.dias.push(dia) }
+    if(!dia.bloques) dia.bloques = [];
+    fn(dia, ag);
+    dia.bloques.sort(function(a,b){ return mins(a.ini) - mins(b.ini) });
+    if(!dia.bloques.length) ag.dias = ag.dias.filter(function(x){ return x.fecha !== dayIso });
+    ag.dias.sort(function(a,b){ return a.fecha < b.fecha ? -1 : 1 });
+    persist();
   }
-  function dayEntry(ag, dayIso){
-    var e = ag.dias.filter(function(x){ return x.fecha === dayIso })[0];
-    if(!e){ e = {fecha:dayIso, bloques:[]}; ag.dias.push(e) }
-    if(!e.bloques) e.bloques = [];
-    return e;
+
+  function guardaEvento(fechaOrig, bloque, dat){
+    if(bloque && fechaOrig !== dat.fecha){
+      guardaBloques(fechaOrig, function(dia){
+        dia.bloques = dia.bloques.filter(function(x){ return x.id !== bloque.id });
+      });
+    }
+    guardaBloques(dat.fecha, function(dia){
+      var ex = bloque ? dia.bloques.filter(function(x){ return x.id === bloque.id })[0] : null;
+      if(!ex){
+        ex = {id: (bloque && bloque.id) || uid(), hecho: (bloque && bloque.hecho) || false};
+        dia.bloques.push(ex);
+      }
+      ex.ini = dat.ini; ex.fin = dat.fin; ex.cat = dat.cat; ex.titulo = dat.titulo;
+      if(dat.nota) ex.nota = dat.nota; else delete ex.nota;
+    });
+  }
+
+  function borraEvento(dayIso, id){
+    guardaBloques(dayIso, function(dia){
+      dia.bloques = dia.bloques.filter(function(x){ return x.id !== id });
+    });
+  }
+
+  /* Formulario de evento: sirve para crear y para editar. */
+  function editorEvento(dayIso, bloque, alTerminar){
+    var form = document.createElement('form');
+    form.className = 'newblock';
+    var opts = Object.keys(CATS).map(function(k){
+      var sel = bloque ? (bloque.cat === k) : (k === 'casa');
+      return '<option value="'+k+'"'+(sel?' selected':'')+'>'+CATS[k].n+'</option>';
+    }).join('');
+    var suf = bloque ? bloque.id : 'nuevo-' + dayIso;
+    form.innerHTML =
+      '<label class="wide">Qué es<input type="text" name="titulo" id="ev-t-'+suf+'" value="'+esc(bloque ? bloque.titulo : '')+'" placeholder="Cita con el dentista" required></label>'+
+      '<label class="wide">Día<input type="date" name="fecha" id="ev-f-'+suf+'" value="'+dayIso+'" required></label>'+
+      '<label>Desde<input type="time" name="ini" id="ev-i-'+suf+'" value="'+esc(bloque ? bloque.ini : '')+'" required></label>'+
+      '<label>Hasta<input type="time" name="fin" id="ev-h-'+suf+'" value="'+esc(bloque ? bloque.fin : '')+'" required></label>'+
+      '<label class="wide">Tipo<select name="cat" id="ev-c-'+suf+'">'+opts+'</select></label>'+
+      '<label class="wide">Nota<input type="text" name="nota" id="ev-n-'+suf+'" value="'+esc(bloque && bloque.nota ? bloque.nota : '')+'" placeholder="Opcional"></label>'+
+      '<div class="acciones">'+
+        '<button class="btn primary" type="submit">'+(bloque ? 'Guardar cambios' : 'Añadir')+'</button>'+
+        (bloque ? '<button class="btn danger" type="button" data-act="borrar">Borrar</button>' : '')+
+        '<button class="btn" type="button" data-act="cancelar">Cancelar</button>'+
+      '</div>';
+    form.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      var t = form.titulo.value.trim(), a = form.ini.value.trim(), b = form.fin.value.trim();
+      if(!t){ toast('Ponle un título'); return }
+      if(!validTime(a) || !validTime(b)){ toast('Faltan las horas'); return }
+      guardaEvento(dayIso, bloque, {
+        fecha: form.fecha.value || dayIso, ini: a, fin: b,
+        cat: form.cat.value, titulo: t, nota: form.nota.value.trim()
+      });
+      alTerminar();
+    });
+    form.querySelector('[data-act="cancelar"]').addEventListener('click', alTerminar);
+    var del = form.querySelector('[data-act="borrar"]');
+    if(del) del.addEventListener('click', function(){
+      if(!window.confirm('¿Borrar «'+bloque.titulo+'»?')) return;
+      borraEvento(dayIso, bloque.id);
+      alTerminar();
+    });
+    return form;
   }
 
   function blockList(dayIso, opts){
@@ -611,56 +713,49 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
       var isNow = opts.markNow && dayIso === today && mins(b.ini) <= nowM && nowM < mins(b.ini) + dur(b.ini, b.fin);
       var li = document.createElement('li');
       li.className = (b.hecho ? 'done ' : '') + (isNow ? 'now' : '');
+      var conAcciones = opts.acciones || (state.edit && opts.editable);
       li.innerHTML =
         '<div class="time mono">'+esc(b.ini)+'<span>'+esc(b.fin)+'</span></div>'+
         '<div class="stripe" style="background:'+cat.c+'"></div>'+
         '<div class="bmain"><div class="title">'+esc(b.titulo)+'</div>'+
         '<div class="meta">'+esc(cat.n)+' · '+hrs(dur(b.ini,b.fin))+(b.nota ? ' · '+esc(b.nota) : '')+(isNow?' · ahora':'')+'</div></div>'+
-        (state.edit && opts.editable
-          ? '<button class="del" aria-label="Borrar bloque">&times;</button>'
-          : '<button class="tick" aria-pressed="'+(b.hecho?'true':'false')+'" aria-label="Marcar hecho"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4.5 4.5L19 7"/></svg></button>');
-      var tick = li.querySelector('.tick');
+        '<button class="tick" aria-pressed="'+(b.hecho?'true':'false')+'" aria-label="Marcar hecho"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4.5 4.5L19 7"/></svg></button>'+
+        (conAcciones
+          ? '<button class="tick" data-act="editar" aria-label="Editar evento"><svg viewBox="0 0 24 24" aria-hidden="true" style="opacity:1"><path d="M4 20h4l10-10-4-4L4 16z"/></svg></button>'
+          : '');
+      var tick = li.querySelector('.tick:not([data-act])');
       if(tick) tick.addEventListener('click', function(){
-        mutateAgenda(function(ag){
-          dayEntry(ag, dayIso).bloques.forEach(function(x){ if(x.id === b.id) x.hecho = !x.hecho });
+        guardaBloques(dayIso, function(dia){
+          dia.bloques.forEach(function(x){ if(x.id === b.id) x.hecho = !x.hecho });
         });
         render();
       });
-      var del = li.querySelector('.del');
-      if(del) del.addEventListener('click', function(){
-        mutateAgenda(function(ag){
-          var e = dayEntry(ag, dayIso);
-          e.bloques = e.bloques.filter(function(x){ return x.id !== b.id });
-        });
+      var ed = li.querySelector('[data-act="editar"]');
+      if(ed) ed.addEventListener('click', function(){
+        state.editando = (state.editando && state.editando.id === b.id) ? null : {fecha:dayIso, id:b.id};
         render();
       });
       ul.appendChild(li);
+      if(state.editando && state.editando.id === b.id && state.editando.fecha === dayIso){
+        var liEd = document.createElement('li');
+        liEd.className = 'editor';
+        liEd.appendChild(editorEvento(dayIso, b, function(){ state.editando = null; render() }));
+        ul.appendChild(liEd);
+      }
     });
     return ul;
   }
 
-  function newBlockForm(dayIso){
-    var f = document.createElement('form');
-    f.className = 'newblock';
-    var opts = Object.keys(CATS).map(function(k){ return '<option value="'+k+'">'+CATS[k].n+'</option>' }).join('');
-    f.innerHTML =
-      '<input class="wide" name="titulo" placeholder="Qué es" aria-label="Título del bloque" required>'+
-      '<input name="ini" placeholder="Desde 07:00" aria-label="Hora de inicio" inputmode="numeric" required>'+
-      '<input name="fin" placeholder="Hasta 08:30" aria-label="Hora de fin" inputmode="numeric" required>'+
-      '<select name="cat" aria-label="Categoría">'+opts+'</select>'+
-      '<button class="btn primary" type="submit">Añadir bloque</button>';
-    f.addEventListener('submit', function(ev){
-      ev.preventDefault();
-      var t = f.titulo.value.trim(), a = f.ini.value.trim(), b = f.fin.value.trim();
-      if(!t){ toast('Ponle un título al bloque'); return }
-      if(!validTime(a) || !validTime(b)){ toast('Las horas van en formato 21:00'); return }
-      mutateAgenda(function(ag){
-        dayEntry(ag, dayIso).bloques.push({id:uid(), ini:a, fin:b, cat:f.cat.value, titulo:t, hecho:false});
-      });
-      f.reset();
+  function botonAnadir(dayIso){
+    var b = document.createElement('button');
+    b.className = 'btn'; b.style.marginTop = '10px';
+    b.textContent = '+ Añadir evento';
+    b.addEventListener('click', function(){
+      state.nuevoEn = state.nuevoEn === dayIso ? null : dayIso;
+      state.editando = null;
       render();
     });
-    return f;
+    return b;
   }
 
   /* ============ HOY ============ */
@@ -737,11 +832,27 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
       });
     });
     var libres = Math.max(0, 7*16*60 - grand);
+    var sub;
+    if(state.subAgenda === 'mes'){
+      var mm = mesActual(), nev = 0, dcon = 0;
+      var cur = new Date(mm.getFullYear(), mm.getMonth(), 1);
+      while(cur.getMonth() === mm.getMonth()){
+        var n = blocksOf(iso(cur)).length;
+        nev += n; if(n) dcon++;
+        cur = addDays(cur, 1);
+      }
+      sub = nev ? nev+' eventos en '+dcon+(dcon===1?' día':' días') : 'Mes sin eventos todavía';
+    } else {
+      sub = grand ? hrs(grand)+' comprometidas · unas '+hrs(libres)+' de margen despierto' : 'Todavía sin bloques';
+    }
     s.appendChild(banner({
-      img:'agenda', alt:'La serranía a mediodía', title:'La semana entera',
-      eyebrow:'Agenda',
-      sub: grand ? hrs(grand)+' comprometidas · unas '+hrs(libres)+' de margen despierto' : 'Todavía sin bloques'
+      img:'agenda', alt:'La serranía a mediodía', title: state.subAgenda === 'mes' ? 'El mes de un vistazo' : 'La semana entera',
+      eyebrow:'Agenda', sub: sub
     }));
+    s.appendChild(subtabs([['semana','Semana'],['mes','Mes']], state.subAgenda,
+      function(k){ state.subAgenda = k; state.editando = null; state.nuevoEn = null; render() }));
+
+    if(state.subAgenda === 'mes') return vistaMes(s);
 
     var c0 = card('Reparto de la semana', grand ? hrs(grand)+' ocupadas' : 'vacía');
     var ed = document.createElement('button');
@@ -762,7 +873,7 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
       });
       c0.body.appendChild(bars);
     } else {
-      c0.body.innerHTML = '<div class="muted small">Esta semana no tiene agenda todavía. Impórtala desde el botón de datos o añade bloques a mano con «Editar».</div>';
+      c0.body.innerHTML = '<div class="muted small">Esta semana no tiene agenda todavía. Impórtala desde el botón de datos o añade eventos a mano con «Editar».</div>';
     }
     var ag = d('agenda');
     if(ag && ag.nota) c0.body.appendChild(h('<div class="note" style="margin-top:12px">'+esc(ag.nota)+'</div>').firstChild);
@@ -774,10 +885,113 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
       var di = iso(dt);
       var c = card(DAYNAMES[i].charAt(0).toUpperCase()+DAYNAMES[i].slice(1), di === today ? 'hoy' : longDate(dt));
       c.body.appendChild(blockList(di, {markNow:true, editable:true}));
-      if(state.edit) c.body.appendChild(newBlockForm(di));
+      if(state.edit){
+        c.body.appendChild(botonAnadir(di));
+        if(state.nuevoEn === di){
+          c.body.appendChild(editorEvento(di, null, function(){ state.nuevoEn = null; render() }));
+        }
+      }
       g.appendChild(c);
     });
     s.appendChild(g);
+    return s;
+  }
+
+  /* ---------- AGENDA · vista de mes ---------- */
+  function primerDiaMes(d){ return new Date(d.getFullYear(), d.getMonth(), 1) }
+  function mesActual(){
+    if(!state.mes) state.mes = iso(primerDiaMes(state.monday));
+    return fechaDe(state.mes);
+  }
+
+  function vistaMes(s){
+    var m = mesActual();
+    var hoyIso = iso(new Date());
+    var ini = mondayOf(new Date(m.getFullYear(), m.getMonth(), 1));
+    var celdas = [];
+    for(var i = 0; i < 42; i++){
+      var dt = addDays(ini, i);
+      celdas.push(dt);
+      if(i >= 34 && dt.getMonth() !== m.getMonth() && (i+1) % 7 === 0) break;
+    }
+
+    var c = card('Mes');
+    var head = c.querySelector('.head');
+    head.innerHTML = '';
+    var prev = document.createElement('button');
+    prev.className = 'iconbtn'; prev.setAttribute('aria-label','Mes anterior');
+    prev.innerHTML = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+    prev.addEventListener('click', function(){
+      state.mes = iso(new Date(m.getFullYear(), m.getMonth()-1, 1)); render();
+    });
+    var titulo = document.createElement('h2');
+    titulo.style.textAlign = 'center';
+    titulo.textContent = MONTHS[m.getMonth()].charAt(0).toUpperCase() + MONTHS[m.getMonth()].slice(1) + ' ' + m.getFullYear();
+    var next = document.createElement('button');
+    next.className = 'iconbtn'; next.setAttribute('aria-label','Mes siguiente');
+    next.innerHTML = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
+    next.addEventListener('click', function(){
+      state.mes = iso(new Date(m.getFullYear(), m.getMonth()+1, 1)); render();
+    });
+    head.appendChild(prev); head.appendChild(titulo); head.appendChild(next);
+
+    var grid = document.createElement('div');
+    grid.className = 'mes';
+    ['L','M','X','J','V','S','D'].forEach(function(n){
+      grid.appendChild(h('<div class="cab">'+n+'</div>').firstChild);
+    });
+    var usadas = {}, totalEventos = 0;
+    celdas.forEach(function(dt){
+      var di = iso(dt);
+      var bs = blocksOf(di);
+      var cats = [];
+      bs.forEach(function(b){ if(cats.indexOf(b.cat) < 0) cats.push(b.cat); usadas[b.cat] = true });
+      if(dt.getMonth() === m.getMonth()) totalEventos += bs.length;
+      var btn = document.createElement('button');
+      btn.className = 'dia' + (dt.getMonth() !== m.getMonth() ? ' fuera' : '') +
+        (di === hoyIso ? ' hoy' : '') + (di === state.diaSel ? ' sel' : '');
+      btn.setAttribute('aria-label', dt.getDate() + ' de ' + MONTHS[dt.getMonth()] + ', ' + bs.length + ' eventos');
+      btn.innerHTML = '<span class="n">'+dt.getDate()+'</span><span class="ps">'+
+        cats.slice(0,6).map(function(k){ return '<i style="background:'+(CATS[k]||CATS.casa).c+'"></i>' }).join('')+
+        '</span>';
+      btn.addEventListener('click', function(){
+        state.diaSel = state.diaSel === di ? null : di;
+        state.editando = null; state.nuevoEn = null;
+        render();
+      });
+      grid.appendChild(btn);
+    });
+    c.body.appendChild(grid);
+
+    var ley = document.createElement('div'); ley.className = 'leyenda';
+    Object.keys(CATS).forEach(function(k){
+      if(!usadas[k]) return;
+      ley.appendChild(h('<span><i style="background:'+CATS[k].c+'"></i>'+CATS[k].n+'</span>').firstChild);
+    });
+    if(ley.childNodes.length) c.body.appendChild(ley);
+    c.body.appendChild(h('<div class="hint">'+(totalEventos ? totalEventos+' eventos este mes. Toca un día para verlo, editarlo o añadir una cita.' : 'Mes sin eventos. Toca un día para añadir el primero.')+'</div>').firstChild);
+    s.appendChild(c);
+
+    if(state.diaSel){
+      var dsel = fechaDe(state.diaSel);
+      var cd = card(DAYNAMES[(dsel.getDay()+6)%7].charAt(0).toUpperCase() + DAYNAMES[(dsel.getDay()+6)%7].slice(1) + ' ' + dsel.getDate(),
+                    state.diaSel === hoyIso ? 'hoy' : MONTHS[dsel.getMonth()]);
+      cd.body.appendChild(blockList(state.diaSel, {markNow:true, acciones:true}));
+      cd.body.appendChild(botonAnadir(state.diaSel));
+      if(state.nuevoEn === state.diaSel){
+        cd.body.appendChild(editorEvento(state.diaSel, null, function(){ state.nuevoEn = null; render() }));
+      }
+      var irSemana = document.createElement('button');
+      irSemana.className = 'btn'; irSemana.style.marginTop = '10px'; irSemana.style.marginLeft = '8px';
+      irSemana.textContent = 'Ver esa semana';
+      irSemana.addEventListener('click', function(){
+        state.monday = mondayOf(dsel);
+        state.subAgenda = 'semana';
+        render(); window.scrollTo({top:0});
+      });
+      cd.body.appendChild(irSemana);
+      s.appendChild(cd);
+    }
     return s;
   }
 
@@ -1581,7 +1795,12 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
   /* ============ arranque ============ */
   document.getElementById('prevw').addEventListener('click', function(){ state.monday = addDays(state.monday,-7); render() });
   document.getElementById('nextw').addEventListener('click', function(){ state.monday = addDays(state.monday,7); render() });
-  document.getElementById('thisw').addEventListener('click', function(){ state.monday = mondayOf(new Date()); render() });
+  document.getElementById('thisw').addEventListener('click', function(){
+    state.monday = mondayOf(new Date());
+    state.mes = iso(primerDiaMes(new Date()));
+    state.diaSel = null; state.editando = null; state.nuevoEn = null;
+    render();
+  });
   document.getElementById('datosbtn').addEventListener('click', function(){ go(state.tab === 'datos' ? 'hoy' : 'datos') });
 
   /* ---------- tema claro / oscuro ---------- */
