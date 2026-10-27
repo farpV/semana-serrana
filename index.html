@@ -293,6 +293,66 @@ li.editor{display:block !important; padding:4px 0 12px}
 .leyenda{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
 .leyenda span{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; color:var(--ink2)}
 .leyenda i{width:7px; height:7px; border-radius:50%}
+
+/* ---------- avisos del inicio ---------- */
+ul.avisos{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px}
+ul.avisos li{
+  display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:11px;
+  background:var(--surface2); border-left:3px solid var(--ink3); font-size:13.5px;
+}
+ul.avisos li.urgente{border-left-color:var(--crit)}
+ul.avisos li.pronto{border-left-color:var(--warn)}
+ul.avisos li.info{border-left-color:var(--sec)}
+ul.avisos .cuando{
+  font-family:var(--mono); font-size:11.5px; color:var(--ink2); white-space:nowrap;
+  padding-top:1px; flex:0 0 auto;
+}
+ul.avisos .qué{flex:1; min-width:0; overflow-wrap:anywhere}
+ul.avisos .qué small{display:block; color:var(--ink3); font-size:11.5px}
+
+/* ---------- calendario de la FP ---------- */
+.mes .dia.entrega{background:#D1452F; border-color:#D1452F}
+.mes .dia.entrega .n{color:#fff; font-weight:600}
+.mes .dia.examen{background:#8E2C3C; border-color:#8E2C3C}
+.mes .dia.examen .n{color:#fff; font-weight:600}
+.mes .dia.clase{border-color:var(--sec)}
+.mes .dia.entrega.hoy .n,.mes .dia.examen.hoy .n{background:#fff; color:#8E2C3C}
+.mes .dia .et{font-size:8.5px; line-height:1.1; color:#fff; text-align:center; overflow:hidden; max-width:100%}
+
+/* ---------- entregas ---------- */
+ul.entregas{list-style:none; margin:0; padding:0}
+ul.entregas li{display:flex; gap:10px; align-items:center; padding:10px 0; border-top:1px solid var(--line)}
+ul.entregas li:first-child{border-top:0}
+ul.entregas li.hecha .t{text-decoration:line-through; color:var(--ink3)}
+ul.entregas .cuenta{
+  font-family:var(--mono); font-size:11px; text-align:center; flex:0 0 auto; width:52px;
+  border-radius:9px; padding:5px 2px; background:var(--surface2); color:var(--ink2); line-height:1.2;
+}
+ul.entregas .cuenta b{display:block; font-size:15px; font-weight:500; color:var(--ink)}
+ul.entregas li.urgente .cuenta{background:#D1452F; color:#fff}
+ul.entregas li.urgente .cuenta b{color:#fff}
+ul.entregas li.pronto .cuenta{background:#A9762C; color:#fff}
+ul.entregas li.pronto .cuenta b{color:#fff}
+ul.entregas .t{flex:1; min-width:0; font-size:14px; font-weight:500; overflow-wrap:anywhere}
+ul.entregas .t small{display:block; font-weight:400; color:var(--ink3); font-size:11.5px}
+.horario{list-style:none; margin:0; padding:0}
+.horario li{display:flex; gap:10px; align-items:center; padding:8px 0; border-top:1px solid var(--line); font-size:13.5px}
+.horario li:first-child{border-top:0}
+.horario .d{width:76px; flex:0 0 auto; color:var(--ink2); text-transform:capitalize}
+.horario .hh{font-family:var(--mono); color:var(--ink); flex:0 0 auto}
+.horario .as{flex:1; min-width:0; color:var(--ink3); font-size:12.5px; text-align:right; overflow-wrap:anywhere}
+
+/* ---------- personalizar el inicio ---------- */
+ul.orden{list-style:none; margin:0; padding:0}
+ul.orden li{display:flex; gap:8px; align-items:center; padding:8px 0; border-top:1px solid var(--line)}
+ul.orden li:first-child{border-top:0}
+ul.orden .nm{flex:1; min-width:0; font-size:14px}
+ul.orden li.off .nm{color:var(--ink3); text-decoration:line-through}
+ul.orden button{
+  width:30px; height:30px; flex:0 0 auto; border:1px solid var(--line); background:var(--surface2);
+  border-radius:9px; cursor:pointer; display:grid; place-items:center; font-size:14px; padding:0; line-height:1;
+}
+ul.orden button:hover{border-color:var(--sec)}
 .kv{list-style:none; margin:0; padding:0}
 .kv li{display:flex; justify-content:space-between; gap:12px; padding:7px 0; border-top:1px solid var(--line); font-size:13.5px}
 .kv li:first-child{border-top:0}
@@ -433,7 +493,8 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
   /* ============ almacenamiento local ============ */
   function base(){
     return {meta:{app:'semana-serrana', version:1}, semanas:{}, estudio:{items:[]},
-            medidas:{registros:[]}, repertorio:{marchas:[]}, config:{}};
+            medidas:{registros:[]}, repertorio:{marchas:[]},
+            fp:{clases:[], entregas:[], modulos:[]}, config:{}};
   }
   var store = base(), storageOk = true;
 
@@ -449,6 +510,7 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
             estudio: p.estudio || {items:[]},
             medidas: p.medidas || {registros:[]},
             repertorio: p.repertorio || {marchas:[]},
+            fp: p.fp || {clases:[], entregas:[], modulos:[]},
             config: p.config || {}
           };
         }
@@ -465,8 +527,9 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
     }
   }
 
-  var state = {tab:'hoy', sub:'menu', subEntreno:'semana', subAgenda:'semana',
+  var state = {tab:'hoy', sub:'menu', subEntreno:'semana', subAgenda:'semana', subEstudio:'entregas',
                edit:false, editando:null, nuevoEn:null, mes:null, diaSel:null,
+               mesFp:null, diaFp:null, editandoEntrega:null, nuevaEntrega:false, personaliza:false,
                monday:mondayOf(new Date())};
 
   /* ============ fechas ============ */
@@ -503,6 +566,37 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
   function saveMedidas(regs){ store.medidas = {registros:regs}; persist() }
   function marchas(){ return (store.repertorio && store.repertorio.marchas) || [] }
   function saveMarchas(ms){ store.repertorio = {marchas:ms}; persist() }
+
+  /* ---------- FP: clases y entregas ---------- */
+  function fp(){
+    if(!store.fp) store.fp = {clases:[], entregas:[], modulos:[]};
+    if(!store.fp.clases) store.fp.clases = [];
+    if(!store.fp.entregas) store.fp.entregas = [];
+    if(!store.fp.modulos) store.fp.modulos = [];
+    return store.fp;
+  }
+  function saveFp(x){ store.fp = x; persist() }
+  function entregas(){
+    return fp().entregas.slice().sort(function(a,b){ return a.fecha < b.fecha ? -1 : (a.fecha > b.fecha ? 1 : 0) });
+  }
+  function entregasDe(f){ return entregas().filter(function(e){ return e.fecha === f }) }
+  function clasesDe(f){
+    var dow = ((fechaDe(f).getDay()+6) % 7) + 1;   // 1 = lunes
+    return fp().clases.filter(function(c){ return Number(c.dia) === dow })
+      .sort(function(a,b){ return mins(a.ini) - mins(b.ini) });
+  }
+  function diasHasta(f){
+    var hoy = fechaDe(iso(new Date()));
+    return Math.round((fechaDe(f) - hoy) / 86400000);
+  }
+  var TIPOS_FP = {
+    entrega:{n:'Entrega', c:'#D1452F'},
+    examen:{n:'Examen', c:'#8E2C3C'},
+    practica:{n:'Práctica', c:'#2F6F9E'},
+    clase:{n:'Clase', c:'#1F6B5E'},
+    hito:{n:'Hito', c:'#A9762C'}
+  };
+  function tipoFp(t){ return TIPOS_FP[t] || TIPOS_FP.entrega }
   function num(v){ var n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : null }
   function fmt(n, dec){ return n == null ? '—' : n.toFixed(dec == null ? 1 : dec).replace('.', ',') }
   function delta(a, b, dec){
@@ -758,7 +852,179 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
     return b;
   }
 
-  /* ============ HOY ============ */
+  /* ============ INICIO (HOY) ============ */
+  var SECCIONES_INICIO = [
+    {k:'avisos',   n:'Avisos'},
+    {k:'bloques',  n:'El día, por bloques'},
+    {k:'clases',   n:'Clases de hoy'},
+    {k:'entregas', n:'Entregas que vienen'},
+    {k:'comidas',  n:'Comidas de hoy'},
+    {k:'entreno',  n:'Entreno de hoy'}
+  ];
+  function confInicio(){
+    if(!store.config) store.config = {};
+    var c = store.config.inicio;
+    if(!c || !c.orden) c = {orden: SECCIONES_INICIO.map(function(x){ return x.k }), off:{}};
+    // secciones nuevas que aún no estén en el orden guardado
+    SECCIONES_INICIO.forEach(function(x){ if(c.orden.indexOf(x.k) < 0) c.orden.push(x.k) });
+    c.orden = c.orden.filter(function(k){
+      return SECCIONES_INICIO.some(function(x){ return x.k === k });
+    });
+    if(!c.off) c.off = {};
+    store.config.inicio = c;
+    return c;
+  }
+  function guardaInicio(c){
+    if(!store.config) store.config = {};
+    store.config.inicio = c;
+    persist();
+  }
+  function nombreSeccion(k){
+    var x = SECCIONES_INICIO.filter(function(y){ return y.k === k })[0];
+    return x ? x.n : k;
+  }
+
+  /* --- los avisos del día --- */
+  function avisosDe(dayIso){
+    var av = [], hoyIso = iso(new Date());
+    var now = new Date(), nowM = now.getHours()*60 + now.getMinutes();
+
+    clasesDe(dayIso).forEach(function(c){
+      var enCurso = dayIso === hoyIso && mins(c.ini) <= nowM && nowM < mins(c.fin);
+      av.push({
+        clase: enCurso ? 'urgente' : 'info',
+        cuando: c.ini,
+        qué: 'Clase de la FP' + (c.asignatura ? ': ' + c.asignatura : ''),
+        detalle: c.ini + ' a ' + c.fin + (enCurso ? ' · está empezada' : '')
+      });
+    });
+
+    entregas().forEach(function(e){
+      if(e.estado === 'entregado') return;
+      var dd = diasHasta(e.fecha);
+      if(dd < 0 || dd > 10) return;
+      av.push({
+        clase: dd <= 2 ? 'urgente' : (dd <= 5 ? 'pronto' : 'info'),
+        cuando: dd === 0 ? 'HOY' : (dd === 1 ? 'mañana' : 'en ' + dd + 'd'),
+        qué: tipoFp(e.tipo).n + ': ' + e.titulo,
+        detalle: (e.modulo ? e.modulo + ' · ' : '') + cortoFecha(e.fecha)
+      });
+    });
+
+    entregas().forEach(function(e){
+      if(e.estado === 'entregado') return;
+      if(diasHasta(e.fecha) !== -1) return;
+      av.push({clase:'urgente', cuando:'ayer', qué:'Sin marcar: ' + e.titulo, detalle:'¿lo entregaste?'});
+    });
+
+    var trabajo = blocksOf(dayIso).filter(function(b){ return b.cat === 'trabajo' })[0];
+    if(trabajo){
+      av.push({clase:'info', cuando:trabajo.ini, qué:'Trabajo en Antequera',
+               detalle:trabajo.ini + ' a ' + trabajo.fin + ' · sales de casa sobre las ' + hhAntes(trabajo.ini, 75)});
+    }
+    var ensayo = blocksOf(dayIso).filter(function(b){ return b.cat === 'ensayo' })[0];
+    if(ensayo){
+      av.push({clase:'info', cuando:ensayo.ini, qué:'Ensayo', detalle:ensayo.ini + ' a ' + ensayo.fin + (ensayo.nota ? ' · ' + ensayo.nota : '')});
+    }
+    av.sort(function(a,b){
+      var pr = {urgente:0, pronto:1, info:2};
+      return pr[a.clase] - pr[b.clase];
+    });
+    return av;
+  }
+  function hhAntes(t, m){
+    var v = mins(t) - m; if(v < 0) v += 1440;
+    return pad(Math.floor(v/60)) + ':' + pad(v%60);
+  }
+
+  function seccionInicio(k, dayIso){
+    if(k === 'avisos'){
+      var av = avisosDe(dayIso);
+      var c = card('Avisos', av.length ? String(av.length) : 'nada urgente');
+      if(av.length){
+        var ul = document.createElement('ul'); ul.className = 'avisos';
+        av.forEach(function(a){
+          ul.appendChild(h('<li class="'+a.clase+'"><span class="cuando">'+esc(a.cuando)+'</span>'+
+            '<span class="qué">'+esc(a.qué)+'<small>'+esc(a.detalle||'')+'</small></span></li>').firstChild);
+        });
+        c.body.appendChild(ul);
+      } else {
+        c.body.innerHTML = '<div class="muted small">Nada que vigilar hoy: sin clases, sin entregas cerca y sin avisos.</div>';
+      }
+      return c;
+    }
+    if(k === 'bloques'){
+      var c1 = card('El día, por bloques');
+      c1.body.appendChild(blockList(dayIso, {markNow:true}));
+      return c1;
+    }
+    if(k === 'clases'){
+      var cl = clasesDe(dayIso);
+      var c2 = card('Clases de hoy', 'FP');
+      if(cl.length){
+        var ulc = document.createElement('ul'); ulc.className = 'horario';
+        cl.forEach(function(x){
+          ulc.appendChild(h('<li><span class="hh">'+esc(x.ini)+'–'+esc(x.fin)+'</span>'+
+            '<span class="as">'+esc(x.asignatura || 'Clase online')+'</span></li>').firstChild);
+        });
+        c2.body.appendChild(ulc);
+      } else {
+        c2.body.innerHTML = '<div class="muted small">Hoy no hay clase.</div>';
+      }
+      return c2;
+    }
+    if(k === 'entregas'){
+      var prox = entregas().filter(function(e){
+        return e.estado !== 'entregado' && diasHasta(e.fecha) >= 0;
+      }).slice(0, 4);
+      var c3 = card('Entregas que vienen', prox.length ? 'próximas '+prox.length : 'ninguna');
+      if(prox.length){
+        c3.body.appendChild(listaEntregas(prox, false));
+      } else {
+        c3.body.innerHTML = '<div class="muted small">No hay entregas apuntadas. Las añades en Estudio.</div>';
+      }
+      var ver = document.createElement('button');
+      ver.className = 'btn'; ver.style.marginTop = '10px'; ver.textContent = 'Ver todo el curso';
+      ver.addEventListener('click', function(){ state.subEstudio = 'entregas'; go('estudio') });
+      c3.body.appendChild(ver);
+      return c3;
+    }
+    if(k === 'comidas'){
+      var mn = d('menu');
+      var c4 = card('Comidas de hoy', 'Comida');
+      var day = mn && mn.dias ? mn.dias.filter(function(x){ return x.fecha === dayIso })[0] : null;
+      if(day && day.comidas){
+        var ul2 = document.createElement('ul'); ul2.className = 'meals';
+        MEALS.forEach(function(m){
+          if(!day.comidas[m[0]]) return;
+          ul2.appendChild(h('<li><span class="k">'+m[1]+'</span><span>'+esc(day.comidas[m[0]])+'</span></li>').firstChild);
+        });
+        c4.body.appendChild(ul2);
+      } else {
+        c4.body.innerHTML = '<div class="muted small">Sin menú para este día. El menú de la semana se prepara el lunes.</div>';
+      }
+      return c4;
+    }
+    if(k === 'entreno'){
+      var en = d('entreno');
+      var c5 = card('Entreno de hoy', 'Entreno');
+      var ses = en && en.sesiones ? en.sesiones.filter(function(x){ return x.fecha === dayIso })[0] : null;
+      if(ses){
+        c5.body.innerHTML = '<div style="font-weight:600; font-size:15px">'+esc(ses.nombre)+'</div>'+
+          '<div class="muted small" style="margin-top:2px">'+(ses.ejercicios||[]).length+' ejercicios'+
+          (ses.duracion?' · '+esc(ses.duracion)+' min':'')+(ses.hecho?' · hecha':'')+'</div>';
+        var b = document.createElement('button');
+        b.className = 'btn primary'; b.style.marginTop = '12px'; b.textContent = 'Registrar series';
+        b.addEventListener('click', function(){ go('entreno') });
+        c5.body.appendChild(b);
+      } else {
+        c5.body.innerHTML = '<div class="muted small">Hoy no toca entreno.</div>';
+      }
+      return c5;
+    }
+    return null;
+  }
+
   function viewHoy(){
     var s = stack();
     var now = new Date();
@@ -772,6 +1038,8 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
       var cat = CATS[k] || CATS.casa;
       return '<span class="chip"><i class="dot" style="background:'+cat.c+'"></i>'+esc(cat.n)+' <b>'+hrs(totals[k])+'</b></span>';
     }).join('');
+    var nAv = avisosDe(dayIso).filter(function(a){ return a.clase !== 'info' }).length;
+    if(nAv) chips = '<span class="chip"><i class="dot" style="background:var(--crit)"></i>'+nAv+' aviso'+(nAv===1?'':'s')+'</span>' + chips;
     s.appendChild(banner({
       img: imagenDelDia(), alt: altDelDia(), tall: true,
       eyebrow: isCurrentWeek() ? 'Hoy' : 'Primer día de la semana',
@@ -780,45 +1048,72 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
       chips: chips || '<span class="chip">Día sin bloques</span>'
     }));
 
-    var c1 = card('El día, por bloques');
-    c1.body.appendChild(blockList(dayIso, {markNow:true}));
-    s.appendChild(c1);
+    var conf = confInicio();
 
-    var g = document.createElement('div'); g.className = 'grid2';
+    var barra = document.createElement('div');
+    barra.className = 'card';
+    barra.innerHTML = '<div class="body subtabs"></div>';
+    var bp = document.createElement('button');
+    bp.className = 'pill'; bp.textContent = state.personaliza ? 'Listo' : 'Personalizar inicio';
+    bp.setAttribute('aria-pressed', state.personaliza ? 'true' : 'false');
+    bp.addEventListener('click', function(){ state.personaliza = !state.personaliza; render() });
+    barra.querySelector('.body').appendChild(bp);
+    s.appendChild(barra);
 
-    var mn = d('menu');
-    var c2 = card('Comidas de hoy', 'Comida');
-    var day = mn && mn.dias ? mn.dias.filter(function(x){ return x.fecha === dayIso })[0] : null;
-    if(day && day.comidas){
-      var ul = document.createElement('ul'); ul.className = 'meals';
-      MEALS.forEach(function(m){
-        if(!day.comidas[m[0]]) return;
+    if(state.personaliza){
+      var cp = card('Qué ves en el inicio', 'y en qué orden');
+      var ul = document.createElement('ul'); ul.className = 'orden';
+      conf.orden.forEach(function(k, i){
         var li = document.createElement('li');
-        li.innerHTML = '<span class="k">'+m[1]+'</span><span>'+esc(day.comidas[m[0]])+'</span>';
+        if(conf.off[k]) li.className = 'off';
+        li.innerHTML = '<span class="nm">'+esc(nombreSeccion(k))+'</span>'+
+          '<button data-a="ver" aria-label="Mostrar u ocultar">'+(conf.off[k] ? '○' : '●')+'</button>'+
+          '<button data-a="sube" aria-label="Subir"'+(i===0?' disabled':'')+'>↑</button>'+
+          '<button data-a="baja" aria-label="Bajar"'+(i===conf.orden.length-1?' disabled':'')+'>↓</button>';
+        li.querySelector('[data-a="ver"]').addEventListener('click', function(){
+          var c2 = clone(conf);
+          if(c2.off[k]) delete c2.off[k]; else c2.off[k] = true;
+          guardaInicio(c2); render();
+        });
+        li.querySelector('[data-a="sube"]').addEventListener('click', function(){
+          if(i === 0) return;
+          var c2 = clone(conf);
+          var t = c2.orden[i-1]; c2.orden[i-1] = c2.orden[i]; c2.orden[i] = t;
+          guardaInicio(c2); render();
+        });
+        li.querySelector('[data-a="baja"]').addEventListener('click', function(){
+          if(i === conf.orden.length-1) return;
+          var c2 = clone(conf);
+          var t = c2.orden[i+1]; c2.orden[i+1] = c2.orden[i]; c2.orden[i] = t;
+          guardaInicio(c2); render();
+        });
         ul.appendChild(li);
       });
-      c2.body.appendChild(ul);
-    } else {
-      c2.body.innerHTML = '<div class="muted small">Sin menú para este día. El menú de la semana se prepara el lunes.</div>';
+      cp.body.appendChild(ul);
+      var reset = document.createElement('button');
+      reset.className = 'btn'; reset.style.marginTop = '12px'; reset.textContent = 'Volver al orden de fábrica';
+      reset.addEventListener('click', function(){
+        guardaInicio({orden: SECCIONES_INICIO.map(function(x){ return x.k }), off:{}});
+        render();
+      });
+      cp.body.appendChild(reset);
+      cp.body.appendChild(h('<div class="hint">El círculo lleno enseña la tarjeta, el vacío la esconde. Las flechas la mueven. Se guarda en este dispositivo.</div>').firstChild);
+      s.appendChild(cp);
     }
-    g.appendChild(c2);
 
-    var en = d('entreno');
-    var c3 = card('Entreno de hoy', 'Entreno');
-    var ses = en && en.sesiones ? en.sesiones.filter(function(x){ return x.fecha === dayIso })[0] : null;
-    if(ses){
-      c3.body.innerHTML = '<div style="font-weight:600; font-size:15px">'+esc(ses.nombre)+'</div>'+
-        '<div class="muted small" style="margin-top:2px">'+(ses.ejercicios||[]).length+' ejercicios'+
-        (ses.duracion?' · '+esc(ses.duracion)+' min':'')+(ses.hecho?' · hecha':'')+'</div>';
-      var b = document.createElement('button');
-      b.className = 'btn primary'; b.style.marginTop = '12px'; b.textContent = 'Registrar series';
-      b.addEventListener('click', function(){ go('entreno') });
-      c3.body.appendChild(b);
-    } else {
-      c3.body.innerHTML = '<div class="muted small">Hoy no toca entreno.</div>';
+    var sueltas = [];
+    conf.orden.forEach(function(k){
+      if(conf.off[k]) return;
+      var el = seccionInicio(k, dayIso);
+      if(!el) return;
+      if(k === 'comidas' || k === 'entreno'){ sueltas.push(el); return }
+      s.appendChild(el);
+    });
+    if(sueltas.length){
+      var g = document.createElement('div'); g.className = 'grid2';
+      sueltas.forEach(function(el){ g.appendChild(el) });
+      s.appendChild(g);
     }
-    g.appendChild(c3);
-    s.appendChild(g);
     return s;
   }
 
@@ -1530,22 +1825,311 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
   }
 
   /* ============ ESTUDIO ============ */
+  function listaEntregas(lista, conAcciones){
+    var ul = document.createElement('ul');
+    ul.className = 'entregas';
+    lista.forEach(function(e){
+      var dd = diasHasta(e.fecha);
+      var hecha = e.estado === 'entregado';
+      var li = document.createElement('li');
+      li.className = (hecha ? 'hecha' : (dd >= 0 && dd <= 2 ? 'urgente' : (dd > 2 && dd <= 7 ? 'pronto' : '')));
+      var txt = hecha ? 'listo' : (dd < 0 ? 'hace ' + (-dd) + 'd' : (dd === 0 ? 'hoy' : (dd === 1 ? 'mañana' : 'faltan')));
+      var big = hecha ? '✓' : (dd < 0 ? '!' : (dd <= 1 ? cortoFecha(e.fecha).split(' ')[0] : dd));
+      var sub = hecha ? 'entregado' : (dd <= 1 && dd >= 0 ? cortoFecha(e.fecha) : 'días');
+      li.innerHTML = '<span class="cuenta"><b>'+esc(String(big))+'</b>'+esc(hecha ? txt : sub)+'</span>'+
+        '<span class="t">'+esc(e.titulo)+'<small>'+
+        esc([tipoFp(e.tipo).n, e.modulo, cortoFecha(e.fecha)].filter(Boolean).join(' · '))+'</small></span>'+
+        '<button class="tick" aria-pressed="'+(hecha?'true':'false')+'" aria-label="Marcar entregado">'+
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4.5 4.5L19 7"/></svg></button>'+
+        (conAcciones ? '<button class="tick" data-act="editar" aria-label="Editar entrega"><svg viewBox="0 0 24 24" aria-hidden="true" style="opacity:1"><path d="M4 20h4l10-10-4-4L4 16z"/></svg></button>' : '');
+      li.querySelector('.tick:not([data-act])').addEventListener('click', function(){
+        var x = clone(fp());
+        x.entregas.forEach(function(y){ if(y.id === e.id) y.estado = (y.estado === 'entregado' ? 'pendiente' : 'entregado') });
+        saveFp(x); render();
+      });
+      var ed = li.querySelector('[data-act="editar"]');
+      if(ed) ed.addEventListener('click', function(){
+        state.editandoEntrega = state.editandoEntrega === e.id ? null : e.id;
+        state.nuevaEntrega = false;
+        render();
+      });
+      ul.appendChild(li);
+      if(conAcciones && state.editandoEntrega === e.id){
+        var liEd = document.createElement('li');
+        liEd.className = 'editor';
+        liEd.appendChild(editorEntrega(e, function(){ state.editandoEntrega = null; render() }));
+        ul.appendChild(liEd);
+      }
+    });
+    return ul;
+  }
+
+  function editorEntrega(e, alTerminar){
+    var nueva = !e || e.nuevo === true;
+    var pre = e || {};
+    if(nueva) e = null;
+    var form = document.createElement('form');
+    form.className = 'newblock';
+    var mods = fp().modulos.slice();
+    if(e && e.modulo && mods.indexOf(e.modulo) < 0) mods.push(e.modulo);
+    var opcMod = ['<option value="">Sin módulo</option>'].concat(mods.map(function(m){
+      return '<option value="'+esc(m)+'"'+(e && e.modulo === m ? ' selected' : '')+'>'+esc(m)+'</option>';
+    })).join('');
+    var opcTipo = Object.keys(TIPOS_FP).map(function(t){
+      return '<option value="'+t+'"'+(e && e.tipo === t ? ' selected' : (!e && t === 'entrega' ? ' selected' : ''))+'>'+TIPOS_FP[t].n+'</option>';
+    }).join('');
+    var suf = e ? e.id : 'nueva';
+    form.innerHTML =
+      '<label class="wide">Qué hay que entregar<input type="text" name="titulo" id="fp-t-'+suf+'" value="'+esc(e ? e.titulo : '')+'" placeholder="Práctica 2 de neumática" required></label>'+
+      '<label class="wide">Fecha límite<input type="date" name="fecha" id="fp-f-'+suf+'" value="'+esc(e ? e.fecha : (pre.fecha || iso(new Date())))+'" required></label>'+
+      '<label>Tipo<select name="tipo" id="fp-ti-'+suf+'">'+opcTipo+'</select></label>'+
+      '<label>Módulo<select name="modulo" id="fp-m-'+suf+'">'+opcMod+'</select></label>'+
+      '<label class="wide">Nota<input type="text" name="nota" id="fp-n-'+suf+'" value="'+esc(e && e.nota ? e.nota : '')+'" placeholder="Formato, dónde se sube, qué falta…"></label>'+
+      '<div class="acciones">'+
+        '<button class="btn primary" type="submit">'+(e ? 'Guardar cambios' : 'Añadir')+'</button>'+
+        (e ? '<button class="btn danger" type="button" data-act="borrar">Borrar</button>' : '')+
+        '<button class="btn" type="button" data-act="cancelar">Cancelar</button>'+
+      '</div>';
+    form.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      var t = form.titulo.value.trim();
+      if(!t){ toast('Ponle un título'); return }
+      var x = clone(fp());
+      var reg = e ? x.entregas.filter(function(y){ return y.id === e.id })[0] : null;
+      if(!reg){ reg = {id: (e && e.id) || uid(), estado:'pendiente'}; x.entregas.push(reg) }
+      reg.titulo = t;
+      reg.fecha = form.fecha.value || iso(new Date());
+      reg.tipo = form.tipo.value;
+      reg.modulo = form.modulo.value;
+      if(form.nota.value.trim()) reg.nota = form.nota.value.trim(); else delete reg.nota;
+      saveFp(x);
+      toast(e ? 'Fecha actualizada' : 'Entrega añadida');
+      alTerminar();
+    });
+    form.querySelector('[data-act="cancelar"]').addEventListener('click', alTerminar);
+    var del = form.querySelector('[data-act="borrar"]');
+    if(del) del.addEventListener('click', function(){
+      if(!window.confirm('¿Borrar «'+e.titulo+'»?')) return;
+      var x = clone(fp());
+      x.entregas = x.entregas.filter(function(y){ return y.id !== e.id });
+      saveFp(x); alTerminar();
+    });
+    return form;
+  }
+
   function viewEstudio(){
     var s = stack();
+    var pend = entregas().filter(function(e){ return e.estado !== 'entregado' && diasHasta(e.fecha) >= 0 });
+    var siguiente = pend[0];
+    s.appendChild(banner({
+      img:'estudio', alt:'Carretera de la serranía al atardecer', title:'Estudio y FP', eyebrow:'Automatización y Robótica',
+      sub: siguiente
+        ? 'Lo siguiente: ' + siguiente.titulo + ' · ' + (function(dd){
+            return dd === 0 ? 'hoy' : (dd === 1 ? 'mañana' : 'en ' + dd + ' días');
+          })(diasHasta(siguiente.fecha))
+        : 'Sin entregas pendientes apuntadas',
+      chips: pend.length ? '<span class="chip">Pendientes <b>'+pend.length+'</b></span>' : ''
+    }));
+    s.appendChild(subtabs([['entregas','Entregas'],['calendario','Calendario'],['clases','Clases y audio']], state.subEstudio,
+      function(k){ state.subEstudio = k; state.editandoEntrega = null; state.nuevaEntrega = false; render() }));
+
+    if(state.subEstudio === 'calendario') return vistaCalendarioFp(s);
+    if(state.subEstudio === 'clases') return vistaClases(s);
+
+    /* --- lista de entregas --- */
+    var todas = entregas();
+    var hoyIso = iso(new Date());
+    var grupos = [
+      ['Esta semana', todas.filter(function(e){ var d2 = diasHasta(e.fecha); return e.estado !== 'entregado' && d2 >= 0 && d2 <= 7 })],
+      ['Más adelante', todas.filter(function(e){ return e.estado !== 'entregado' && diasHasta(e.fecha) > 7 })],
+      ['Atrasadas', todas.filter(function(e){ return e.estado !== 'entregado' && diasHasta(e.fecha) < 0 })],
+      ['Hechas', todas.filter(function(e){ return e.estado === 'entregado' })]
+    ];
+    var hayAlgo = false;
+    grupos.forEach(function(g){
+      if(!g[1].length) return;
+      hayAlgo = true;
+      var c = card(g[0], g[1].length + (g[1].length === 1 ? ' cosa' : ' cosas'));
+      c.body.appendChild(listaEntregas(g[1], true));
+      s.appendChild(c);
+    });
+    if(!hayAlgo){
+      s.appendChild(emptyCard('Todavía no hay nada apuntado. Añade abajo cada entrega, examen o práctica con su fecha límite y la verás aquí y en el calendario.'));
+    }
+
+    var ca = card('Añadir al curso');
+    if(state.nuevaEntrega){
+      ca.body.appendChild(editorEntrega(null, function(){ state.nuevaEntrega = false; render() }));
+    } else {
+      var ba = document.createElement('button');
+      ba.className = 'btn primary'; ba.textContent = '+ Nueva entrega o examen';
+      ba.addEventListener('click', function(){ state.nuevaEntrega = true; state.editandoEntrega = null; render() });
+      ca.body.appendChild(ba);
+      ca.body.appendChild(h('<div class="hint">Si el profesor mueve una fecha, entra en la entrega con el lápiz y cámbiala: el calendario y los avisos se ajustan solos.</div>').firstChild);
+    }
+    s.appendChild(ca);
+    return s;
+  }
+
+  /* --- calendario con los días de entrega marcados --- */
+  function vistaCalendarioFp(s){
+    if(!state.mesFp) state.mesFp = iso(primerDiaMes(new Date()));
+    var m = fechaDe(state.mesFp);
+    var hoyIso = iso(new Date());
+    var ini = mondayOf(new Date(m.getFullYear(), m.getMonth(), 1));
+    var celdas = [];
+    for(var i = 0; i < 42; i++){
+      var dt = addDays(ini, i);
+      celdas.push(dt);
+      if(i >= 34 && dt.getMonth() !== m.getMonth() && (i+1) % 7 === 0) break;
+    }
+
+    var c = card('Mes');
+    var head = c.querySelector('.head');
+    head.innerHTML = '';
+    var prev = document.createElement('button');
+    prev.className = 'iconbtn'; prev.setAttribute('aria-label','Mes anterior');
+    prev.innerHTML = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+    prev.addEventListener('click', function(){ state.mesFp = iso(new Date(m.getFullYear(), m.getMonth()-1, 1)); render() });
+    var tit = document.createElement('h2');
+    tit.style.textAlign = 'center';
+    tit.textContent = MONTHS[m.getMonth()].charAt(0).toUpperCase() + MONTHS[m.getMonth()].slice(1) + ' ' + m.getFullYear();
+    var next = document.createElement('button');
+    next.className = 'iconbtn'; next.setAttribute('aria-label','Mes siguiente');
+    next.innerHTML = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
+    next.addEventListener('click', function(){ state.mesFp = iso(new Date(m.getFullYear(), m.getMonth()+1, 1)); render() });
+    head.appendChild(prev); head.appendChild(tit); head.appendChild(next);
+
+    var grid = document.createElement('div');
+    grid.className = 'mes';
+    ['L','M','X','J','V','S','D'].forEach(function(n){ grid.appendChild(h('<div class="cab">'+n+'</div>').firstChild) });
+
+    var nMes = 0;
+    celdas.forEach(function(dt){
+      var di = iso(dt);
+      var es = entregasDe(di);
+      var cl = clasesDe(di);
+      var hayExamen = es.some(function(e){ return e.tipo === 'examen' });
+      var hayEntrega = es.length > 0;
+      if(dt.getMonth() === m.getMonth()) nMes += es.length;
+      var btn = document.createElement('button');
+      btn.className = 'dia' + (dt.getMonth() !== m.getMonth() ? ' fuera' : '') +
+        (di === hoyIso ? ' hoy' : '') + (di === state.diaFp ? ' sel' : '') +
+        (hayExamen ? ' examen' : (hayEntrega ? ' entrega' : (cl.length ? ' clase' : '')));
+      btn.setAttribute('aria-label', dt.getDate() + ' de ' + MONTHS[dt.getMonth()] + ': ' +
+        (es.length ? es.length + ' entregas' : 'sin entregas') + (cl.length ? ', con clase' : ''));
+      btn.innerHTML = '<span class="n">'+dt.getDate()+'</span>' +
+        (hayEntrega ? '<span class="et">'+esc(es.length > 1 ? es.length + ' cosas' : tipoFp(es[0].tipo).n.toLowerCase())+'</span>'
+                    : '<span class="ps">'+(cl.length ? '<i style="background:var(--c-estudio)"></i>' : '')+'</span>');
+      btn.addEventListener('click', function(){
+        state.diaFp = state.diaFp === di ? null : di;
+        state.editandoEntrega = null; state.nuevaEntrega = false;
+        render();
+      });
+      grid.appendChild(btn);
+    });
+    c.body.appendChild(grid);
+    c.body.appendChild(h('<div class="leyenda">'+
+      '<span><i style="background:#D1452F"></i>Día de entrega</span>'+
+      '<span><i style="background:#8E2C3C"></i>Examen</span>'+
+      '<span><i style="background:var(--c-estudio)"></i>Clase online</span></div>').firstChild);
+    c.body.appendChild(h('<div class="hint">'+(nMes ? nMes+(nMes===1 ? ' cosa que entregar este mes.' : ' entregas este mes.')+' Toca un día para verlas o añadir una.' : 'Este mes no hay nada que entregar. Toca un día para apuntar algo.')+'</div>').firstChild);
+    s.appendChild(c);
+
+    if(state.diaFp){
+      var dsel = fechaDe(state.diaFp);
+      var cd = card(DAYNAMES[(dsel.getDay()+6)%7].charAt(0).toUpperCase() + DAYNAMES[(dsel.getDay()+6)%7].slice(1) + ' ' + dsel.getDate(),
+                    state.diaFp === hoyIso ? 'hoy' : MONTHS[dsel.getMonth()]);
+      var esd = entregasDe(state.diaFp);
+      if(esd.length) cd.body.appendChild(listaEntregas(esd, true));
+      else cd.body.innerHTML = '<div class="muted small">Ese día no hay nada que entregar.</div>';
+      var cld = clasesDe(state.diaFp);
+      if(cld.length){
+        var ulc = document.createElement('ul'); ulc.className = 'horario'; ulc.style.marginTop = '10px';
+        cld.forEach(function(x){
+          ulc.appendChild(h('<li><span class="hh">'+esc(x.ini)+'–'+esc(x.fin)+'</span><span class="as">'+esc(x.asignatura || 'Clase online')+'</span></li>').firstChild);
+        });
+        cd.body.appendChild(ulc);
+      }
+      if(state.nuevaEntrega){
+        cd.body.appendChild(editorEntrega({id:null, titulo:'', fecha:state.diaFp, tipo:'entrega', modulo:'', estado:'pendiente', nuevo:true},
+          function(){ state.nuevaEntrega = false; render() }));
+      } else {
+        var bn = document.createElement('button');
+        bn.className = 'btn primary'; bn.style.marginTop = '10px'; bn.textContent = '+ Añadir en este día';
+        bn.addEventListener('click', function(){ state.nuevaEntrega = true; state.editandoEntrega = null; render() });
+        cd.body.appendChild(bn);
+      }
+      s.appendChild(cd);
+    }
+    return s;
+  }
+
+  /* --- horario de clases, podcasts y biblioteca --- */
+  function vistaClases(s){
+    var cl = fp().clases.slice().sort(function(a,b){
+      return Number(a.dia) - Number(b.dia) || mins(a.ini) - mins(b.ini);
+    });
+    var ch = card('Horario de clases', cl.length ? cl.length + ' a la semana' : 'sin horario');
+    if(cl.length){
+      var ul = document.createElement('ul'); ul.className = 'horario';
+      cl.forEach(function(x, i){
+        var li = document.createElement('li');
+        li.innerHTML = '<span class="d">'+esc(DAYNAMES[Number(x.dia)-1] || '')+'</span>'+
+          '<span class="hh">'+esc(x.ini)+'–'+esc(x.fin)+'</span>'+
+          '<span class="as">'+esc(x.asignatura || 'Clase online')+'</span>'+
+          '<button class="del" aria-label="Quitar clase">&times;</button>';
+        li.querySelector('.del').addEventListener('click', function(){
+          var xx = clone(fp());
+          xx.clases = xx.clases.filter(function(y){
+            return !(Number(y.dia) === Number(x.dia) && y.ini === x.ini && y.fin === x.fin);
+          });
+          saveFp(xx); render();
+        });
+        ul.appendChild(li);
+      });
+      ch.body.appendChild(ul);
+    } else {
+      ch.body.innerHTML = '<div class="muted small">Sin clases apuntadas.</div>';
+    }
+    var fh = document.createElement('form');
+    fh.className = 'newblock';
+    fh.innerHTML = '<label>Día<select name="dia" id="cl-dia">'+
+      DAYNAMES.map(function(n,i){ return '<option value="'+(i+1)+'">'+n.charAt(0).toUpperCase()+n.slice(1)+'</option>' }).join('')+
+      '</select></label>'+
+      '<label>Desde<input type="time" name="ini" id="cl-ini" required></label>'+
+      '<label>Hasta<input type="time" name="fin" id="cl-fin" required></label>'+
+      '<label class="wide">Asignatura<input type="text" name="asignatura" id="cl-as" placeholder="Opcional"></label>'+
+      '<div class="acciones"><button class="btn" type="submit">Añadir clase</button></div>';
+    fh.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      if(!validTime(fh.ini.value) || !validTime(fh.fin.value)){ toast('Faltan las horas'); return }
+      var xx = clone(fp());
+      xx.clases.push({dia:Number(fh.dia.value), ini:fh.ini.value, fin:fh.fin.value, asignatura:fh.asignatura.value.trim()});
+      saveFp(xx); fh.reset(); render();
+    });
+    ch.body.appendChild(fh);
+    s.appendChild(ch);
+
+    var mods = fp().modulos;
+    if(mods.length){
+      var cm = card('Módulos del curso', mods.length + '');
+      var ulm = document.createElement('ul'); ulm.className = 'kv';
+      mods.forEach(function(mo, i){
+        var n = entregas().filter(function(e){ return e.modulo === mo }).length;
+        ulm.appendChild(h('<li><span>'+esc(mo)+'</span><span class="v">'+(n ? n + (n===1?' cosa':' cosas') : '—')+'</span></li>').firstChild);
+      });
+      cm.body.appendChild(ulm);
+      s.appendChild(cm);
+    }
+
     var carMin = 0;
     weekDates().forEach(function(dt){
-      blocksOf(iso(dt)).forEach(function(b){ if(b.cat==='trayecto') carMin += dur(b.ini,b.fin) });
+      blocksOf(iso(dt)).forEach(function(b){ if(b.cat === 'trayecto') carMin += dur(b.ini,b.fin) });
     });
-    s.appendChild(banner({
-      img:'estudio', alt:'Carretera de la serranía al atardecer', title:'Estudio en el coche', eyebrow:'Audio-estudio',
-      sub:'Ronda–Antequera son unos 70 minutos por sentido',
-      chips:'<span class="chip">Volante esta semana <b>'+hrs(carMin)+'</b></span>'
-    }));
-
-    /* --- recomendados de la semana, con comentarios --- */
     var rec = d('recomendados');
     var items = (rec && rec.items) || [];
-    var cr = card('Recomendados de la semana', items.length ? items.length + ' para el coche' : 'sin recomendaciones');
+    var cr = card('Para el coche', carMin ? hrs(carMin) + ' de volante' : 'audio-estudio');
     if(items.length){
       items.forEach(function(it, i){
         var det = document.createElement('details');
@@ -1565,7 +2149,6 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
         });
         var box = det.querySelector('.box');
         if(it.porque) box.appendChild(h('<p class="porque">'+esc(it.porque)+'</p>').firstChild);
-        if(it.url) box.appendChild(h('<p class="porque"><a href="'+esc(it.url)+'" target="_blank" rel="noopener">Abrir</a></p>').firstChild);
         var ta = document.createElement('textarea');
         ta.id = 'rec-com-' + i;
         ta.placeholder = 'Qué te has llevado: ideas, datos, qué aplicar…';
@@ -1577,13 +2160,12 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
         cr.body.appendChild(det);
       });
     } else {
-      cr.body.innerHTML = '<div class="muted small">Esta semana no hay recomendaciones cargadas. Llegan con la agenda del domingo, y cada una trae su hueco para apuntar lo que saques.</div>';
+      cr.body.innerHTML = '<div class="muted small">Esta semana no hay recomendaciones cargadas. Llegan con la agenda del domingo.</div>';
     }
     s.appendChild(cr);
 
     var lib = store.estudio || {items:[]};
-    var pend = (lib.items||[]).filter(function(i){ return i.estado !== 'hecho' }).length;
-    var c = card('Biblioteca', pend + ' pendientes');
+    var c = card('Biblioteca', (lib.items||[]).filter(function(i){ return i.estado !== 'hecho' }).length + ' pendientes');
     if((lib.items||[]).length){
       (lib.items||[]).forEach(function(it, i){
         var det = document.createElement('details');
@@ -1602,14 +2184,14 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
           saveEstudio(nx); render();
         });
         var box = det.querySelector('.box');
-        var ta = document.createElement('textarea');
-        ta.id = 'lib-com-' + i;
-        ta.placeholder = 'Comentarios: qué te ha parecido, qué aplicar…';
-        ta.value = it.comentario || '';
-        ta.addEventListener('change', function(){
-          var nx = clone(lib); nx.items[i].comentario = ta.value; saveEstudio(nx);
+        var ta2 = document.createElement('textarea');
+        ta2.id = 'lib-com-' + i;
+        ta2.placeholder = 'Comentarios: qué te ha parecido, qué aplicar…';
+        ta2.value = it.comentario || '';
+        ta2.addEventListener('change', function(){
+          var nx = clone(lib); nx.items[i].comentario = ta2.value; saveEstudio(nx);
         });
-        box.appendChild(ta);
+        box.appendChild(ta2);
         var acts = document.createElement('div'); acts.className = 'acts';
         var del = document.createElement('button');
         del.className = 'btn danger'; del.textContent = 'Borrar';
@@ -1622,21 +2204,20 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
     } else {
       c.body.innerHTML = '<div class="muted small">La biblioteca está vacía. Añade lo primero que quieras escuchar en el coche.</div>';
     }
-
-    var row = document.createElement('div'); row.className='addrow';
+    var row = document.createElement('div'); row.className = 'addrow';
     var inp = document.createElement('input');
-    inp.id='newstudy'; inp.placeholder='Añadir: podcast, clase o libro'; inp.setAttribute('aria-label','Nuevo contenido');
-    var add = document.createElement('button'); add.className='btn primary'; add.textContent='Añadir';
+    inp.id = 'newstudy'; inp.placeholder = 'Añadir: podcast, clase o libro'; inp.setAttribute('aria-label','Nuevo contenido');
+    var add = document.createElement('button'); add.className = 'btn primary'; add.textContent = 'Añadir';
     function addItem(){
       var t = inp.value.trim(); if(!t) return;
       var nx = clone(store.estudio || {items:[]});
       nx.items = nx.items || [];
       nx.items.unshift({titulo:t, tipo:'', fuente:'', duracion:'', estado:'pendiente', comentario:''});
-      inp.value='';
+      inp.value = '';
       saveEstudio(nx); render();
     }
     add.addEventListener('click', addItem);
-    inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); addItem() } });
+    inp.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); addItem() } });
     row.appendChild(inp); row.appendChild(add);
     c.body.appendChild(row);
     s.appendChild(c);
@@ -1658,6 +2239,7 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
       '<li><span>Contenidos de estudio</span><span class="v">'+((store.estudio && store.estudio.items) || []).length+'</span></li>'+
       '<li><span>Mediciones</span><span class="v">'+medidas().length+'</span></li>'+
       '<li><span>Marchas en el repertorio</span><span class="v">'+marchas().length+'</span></li>'+
+      '<li><span>Entregas de la FP</span><span class="v">'+fp().entregas.length+'</span></li>'+
       '<li><span>Tamaño</span><span class="v">'+(storeBytes()/1024).toFixed(1)+' KB</span></li>'+
       '<li><span>Último guardado</span><span class="v">'+(store.meta && store.meta.guardado ? new Date(store.meta.guardado).toLocaleString('es-ES') : '—')+'</span></li>'+
       '<li><span>Almacenamiento</span><span class="v">'+(storageOk ? 'disponible' : 'bloqueado')+'</span></li>';
@@ -1733,7 +2315,7 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
       var inc;
       try{ inc = JSON.parse(String(r.result)) }
       catch(e){ toast('Ese archivo no es una copia válida'); return }
-      if(!inc || typeof inc !== 'object' || (!inc.semanas && !inc.estudio)){
+      if(!inc || typeof inc !== 'object' || (!inc.semanas && !inc.estudio && !inc.fp)){
         toast('Ese archivo no parece una copia de tu agenda'); return;
       }
       if(importMode === 'replace'){
@@ -1744,6 +2326,7 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
           estudio: inc.estudio || {items:[]},
           medidas: inc.medidas || {registros:[]},
           repertorio: inc.repertorio || {marchas:[]},
+          fp: inc.fp || {clases:[], entregas:[], modulos:[]},
           config: inc.config || {}
         };
         persist();
@@ -1782,6 +2365,24 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
         });
         store.repertorio = {marchas:mar};
 
+        // FP: entregas por id (gana el archivo), clases y módulos sin duplicar
+        if(inc.fp){
+          var x = fp();
+          (inc.fp.entregas || []).forEach(function(e){
+            if(!e.id) e.id = uid();
+            var mia = x.entregas.filter(function(y){ return y.id === e.id })[0];
+            if(mia){ Object.keys(e).forEach(function(k){ if(k !== 'estado') mia[k] = e[k] }) }
+            else x.entregas.push(e);
+          });
+          (inc.fp.clases || []).forEach(function(c){
+            var rep = x.clases.some(function(y){
+              return Number(y.dia) === Number(c.dia) && y.ini === c.ini && y.fin === c.fin;
+            });
+            if(!rep) x.clases.push(c);
+          });
+          (inc.fp.modulos || []).forEach(function(m){ if(x.modulos.indexOf(m) < 0) x.modulos.push(m) });
+          store.fp = x;
+        }
         if(inc.config) Object.keys(inc.config).forEach(function(k){ store.config[k] = inc.config[k] });
         persist();
         toast('Importado: ' + nw + ' semana' + (nw===1?'':'s'));
