@@ -37,6 +37,12 @@ Abrir la web en Chrome y elegir «Añadir a pantalla de inicio». Queda como una
 
 GitHub Pages sirve la carpeta tal cual, sin compilar nada. Rama `main`, carpeta raíz.
 
+## Navegación
+
+El título de la cabecera es un desplegable: lista todas las secciones con lo que pasa hoy en cada una y deja saltar directamente a cualquier apartado (Agenda › Mes, Entreno › Medidas, Estudio › Calendario…).
+
+El botón «+» abre el **apunte rápido**: se escribe en lenguaje normal («dentista jueves a las 17:30», «comprar café y leche», «entrega práctica 3 el 20 nov») y la app decide si es un evento, algo de la compra, una entrega o un audio, con su fecha y su hora. Se interpreta en el dispositivo, sin servidor.
+
 ## Secciones
 
 - **Hoy**: los bloques del día, con el que está en curso resaltado, las comidas y el entreno.
