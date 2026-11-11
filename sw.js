@@ -1,7 +1,7 @@
 /* Agenda personal — service worker.
    La página siempre se pide a la red primero, así los cambios se ven al instante.
    La caché queda de respaldo para cuando no hay cobertura. */
-var CACHE = 'agenda-personal-v5';
+var CACHE = 'agenda-personal-v6';
 var ASSETS = [
   './',
   'index.html',
@@ -14,7 +14,8 @@ var ASSETS = [
   'img/entreno.webp',
   'img/comida.webp',
   'img/banda.webp',
-  'img/estudio.webp'
+  'img/estudio.webp',
+  'img/gastos.webp'
 ];
 
 self.addEventListener('install', function(e){
