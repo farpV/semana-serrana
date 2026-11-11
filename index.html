@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Agenda personal</title>
 <meta name="description" content="Agenda, entreno y medidas, menú y compra, banda y estudio. Los datos se guardan solo en este dispositivo.">
 <meta name="theme-color" content="#F2F4F2" media="(prefers-color-scheme: light)">
@@ -161,14 +161,16 @@ header.top{
 
 /* ---------- apunte rápido ---------- */
 .fab{
-  position:fixed; right:max(18px, env(safe-area-inset-right)); bottom:calc(20px + env(safe-area-inset-bottom)); z-index:40;
+  position:fixed; z-index:40; top:auto; left:auto;
+  right:calc(18px + env(safe-area-inset-right)); bottom:calc(20px + env(safe-area-inset-bottom));
   width:58px; height:58px; border-radius:20px; border:0; cursor:pointer;
   background:var(--sec); color:var(--on-sec);
   box-shadow:0 14px 30px -10px rgba(12,22,18,.55), 0 2px 5px rgba(12,22,18,.2);
   display:grid; place-items:center;
+  transform:translateZ(0); will-change:transform;   /* capa propia: no tiembla al hacer scroll */
 }
 .fab svg{width:26px; height:26px; stroke:currentColor; fill:none; stroke-width:2.2; stroke-linecap:round}
-.fab:active{transform:scale(.96)}
+.fab:active{transform:translateZ(0) scale(.96)}
 .sheet{
   position:fixed; left:0; right:0; bottom:0; z-index:60; margin:0 auto; max-width:560px;
   background:var(--surface); border:1px solid var(--line); border-bottom:0;
@@ -560,7 +562,6 @@ details.item .acts{display:flex; gap:8px; margin-top:8px; align-items:center; fl
 @media (min-width:900px){
   .secbtn .tx b{font-size:26px}
   .menu{left:16px}
-  .fab{right:calc(50% - 440px + 12px)}
 }
 </style>
 </head>
